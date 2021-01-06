@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
 @ControllerAdvice
-class ItemNotFoundInfo {
+class NotFoundInfo {
 
   @ResponseBody
   @ExceptionHandler(ItemNotFoundException.class)
@@ -14,4 +14,19 @@ class ItemNotFoundInfo {
   String itemNotFoundHandler(ItemNotFoundException ex) {
     return ex.getMessage();
   }
+  
+  @ResponseBody
+  @ExceptionHandler(CategoryNotFoundException.class)
+  @ResponseStatus(HttpStatus.NOT_FOUND)
+  String itemNotFoundHandler(CategoryNotFoundException ex) {
+    return ex.getMessage();
+  }
+  
+  @ResponseBody
+  @ExceptionHandler(DoubleItemException.class)
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  String doubleItemHandler(DoubleItemException ex) {
+    return ex.getMessage();
+  }
+  
 }

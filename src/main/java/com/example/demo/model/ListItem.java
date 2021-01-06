@@ -1,9 +1,12 @@
 package com.example.demo.model;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import javax.persistence.*;
+import javax.validation.constraints.NotEmpty;
+
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.NonNull;
@@ -23,13 +26,19 @@ public class ListItem {
 
     @Column(name="taskName")
     @NonNull
+    @NotEmpty
     private String taskName;
 
     @Column(name="createdAt")
     private Date createdAt = new Date();
-    
-    @OneToMany
-    Set<ItemCategory> categories;
+   
+    @ManyToMany (targetEntity=ItemCategory.class, fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE})
+    @JoinTable(
+            name = "Listitem_Category", 
+            joinColumns = { @JoinColumn(name = "listitemId", referencedColumnName = "itemId") }, 
+            inverseJoinColumns = { @JoinColumn(name = "categoryId", referencedColumnName = "categoryId") }
+        )
+    Set<ItemCategory> categories = new HashSet<>();
     
     //to be able to check for the same items a task is considered the same if it has the same name and belongs to the same list of categories
     @Override

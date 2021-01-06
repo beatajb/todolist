@@ -5,6 +5,9 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.IanaLinkRelations;
@@ -17,69 +20,121 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.demo.exceptions.CategoryNotFoundException;
+import com.example.demo.exceptions.DoubleItemException;
 import com.example.demo.exceptions.ItemNotFoundException;
+import com.example.demo.model.ItemCategory;
 import com.example.demo.model.ItemModelAssembler;
 import com.example.demo.model.ListItem;
+import com.example.demo.repositories.CategoryRepository;
 import com.example.demo.repositories.ListItemsRepository;
 
+import lombok.NoArgsConstructor;
+
 @RestController
+@NoArgsConstructor
 public class ItemsController {
-	private final ListItemsRepository repository;
-	private final ItemModelAssembler assembler;
-
-	ItemsController(ListItemsRepository repository, ItemModelAssembler assembler) {
-		this.repository = repository;
-		this.assembler = assembler;
-	}
-
+	
+	@Autowired
+	private ListItemsRepository itemRepository;
+	@Autowired
+	private ItemModelAssembler itemAssembler;
+	@Autowired
+	private CategoryRepository categoryRepository;
+	
 	@GetMapping("/items")
 	public CollectionModel<EntityModel<ListItem>> all() {
 
-		List<EntityModel<ListItem>> items = repository.findAll().stream()
-				.map(assembler::toModel) 
+		List<EntityModel<ListItem>> items = itemRepository.findAll().stream()
+				.map(itemAssembler::toModel) 
 				.collect(Collectors.toList());
 
 		return CollectionModel.of(items, linkTo(methodOn(ItemsController.class).all()).withSelfRel());
 	}
 
 	@PostMapping("/items")
-	public ResponseEntity<?> newItem(@RequestBody ListItem newItem) {
-		EntityModel<ListItem> entityModel = assembler.toModel(repository.save(newItem));
+	public ResponseEntity<?> newItem(@Valid @RequestBody ListItem newItem) {
+		List<ListItem> doubleItem = itemRepository.findAll().stream()
+				.filter(item->item.getTaskName().equals(newItem.getTaskName()))
+				.collect(Collectors.toList());
+		if(!doubleItem.isEmpty()) {
+			throw new DoubleItemException(doubleItem.get(0).getItemId(), doubleItem.get(0).getTaskName());
+		}
+		
+		EntityModel<ListItem> entityModel = itemAssembler.toModel(itemRepository.save(newItem));
 
 		  return ResponseEntity
 		      .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
 		      .body(entityModel);
 	}
 
-	@GetMapping("/items/{id}")
-	public EntityModel<ListItem> one(@PathVariable Long id) {
-		ListItem item = repository.findById(id).orElseThrow(() -> new ItemNotFoundException(id));
-		return assembler.toModel(item);
+	@GetMapping("/items/{itemId}")
+	public EntityModel<ListItem> one(@PathVariable Long itemId) {
+		ListItem item = itemRepository.findById(itemId).orElseThrow(() -> new ItemNotFoundException(itemId));
+		return itemAssembler.toModel(item);
 	}
 
-	@PutMapping("/items/{id}")
-	public ResponseEntity<EntityModel<ListItem>> replaceItem(@RequestBody ListItem newItem, @PathVariable Long id) {
+	@PutMapping(name = "/items/{itemId}")
+	public ResponseEntity<EntityModel<ListItem>> replaceItem(@Valid @RequestBody ListItem newItem, @PathVariable Long itemId) {
 
-		  ListItem updatedItem = repository.findById(id) 
+		  ListItem updatedItem = itemRepository.findById(itemId) 
 			      .map(item -> {
 			        item.setTaskName(newItem.getTaskName());
-			        return repository.save(item);
+			        return itemRepository.save(item);
 			      }) //
 			      .orElseGet(() -> {
-			        newItem.setItemId(id);
-			        return repository.save(newItem);
+			        newItem.setItemId(itemId);
+			        return itemRepository.save(newItem);
 			      });
 
-			  EntityModel<ListItem> entityModel = assembler.toModel(updatedItem);
+			  EntityModel<ListItem> entityModel = itemAssembler.toModel(updatedItem);
 
 			  return ResponseEntity
 			      .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
 			      .body(entityModel);
 	}
 
-	@DeleteMapping("/items/{id}")
-	public ResponseEntity<Object> deleteItem(@PathVariable Long id) {
-		repository.deleteById(id);
+	@DeleteMapping("/items/{itemId}")
+	public ResponseEntity<Object> deleteItem(@PathVariable Long itemId) {
+		itemRepository.deleteById(itemId);
 		return ResponseEntity.noContent().build();
 	}
+	
+	@PutMapping("/items/{itemId}/addcategory/{categoryId}")
+	public ResponseEntity<EntityModel<ListItem>> attachCategory(@PathVariable Long itemId, @PathVariable Long categoryId){
+		
+		ItemCategory category = categoryRepository.findById(categoryId).orElseThrow(() -> new CategoryNotFoundException(categoryId));
+		
+		ListItem updatedItem = itemRepository.findById(itemId) 
+			      .map(item -> {
+			        item.getCategories().add(category);
+			        return itemRepository.save(item);
+			      }) 
+			      .orElseThrow(() -> new ItemNotFoundException(itemId));
+
+			  EntityModel<ListItem> entityModel = itemAssembler.toModel(updatedItem);
+
+			  return ResponseEntity
+			      .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+			      .body(entityModel);
+	} 
+	
+	@PutMapping("/items/{itemId}/removecategory/{categoryId}")
+	public ResponseEntity<EntityModel<ListItem>> removeCategory(@PathVariable Long itemId, @PathVariable Long categoryId){
+		
+		ItemCategory category = categoryRepository.findById(categoryId).orElseThrow(() -> new CategoryNotFoundException(categoryId));
+		
+		ListItem updatedItem = itemRepository.findById(itemId) 
+			      .map(item -> {
+			        item.getCategories().remove(category);
+			        return itemRepository.save(item);
+			      }) 
+			      .orElseThrow(() -> new ItemNotFoundException(itemId));
+
+			  EntityModel<ListItem> entityModel = itemAssembler.toModel(updatedItem);
+
+			  return ResponseEntity
+			      .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
+			      .body(entityModel);
+	} 
 }

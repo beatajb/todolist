@@ -1,14 +1,22 @@
 package com.example.demo.model;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.ManyToMany;
 import javax.persistence.Table;
+import javax.validation.constraints.NotEmpty;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -28,11 +36,21 @@ public class ItemCategory {
 	
 	@Column(name="categoryName")
     @NonNull
+    @NotEmpty
     private String categoryName;
 
     @Column(name="createdAt")
     private Date createdAt = new Date();
     
+    @JsonIgnore
+    @ManyToMany (fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE}, mappedBy = "categories")
+    private Set<ListItem> items = new HashSet<>(); 
+    
+    public void addListItem(ListItem item) {
+        items.add(item);
+        item.getCategories().add(this);
+    }
+
     @Override
     public boolean equals(Object o) {
 
