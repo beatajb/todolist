@@ -30,10 +30,10 @@ import lombok.NoArgsConstructor;
 @RestController
 @NoArgsConstructor
 public class CategoriesController {
-	
+
 	@Autowired
 	private CategoryRepository categoryRepository;
-	
+
 	@Autowired
 	private CategoryModelAssembler categoryAssembler;
 
@@ -41,8 +41,7 @@ public class CategoriesController {
 	public CollectionModel<EntityModel<ItemCategory>> all() {
 
 		List<EntityModel<ItemCategory>> categories = categoryRepository.findAll().stream()
-				.map(categoryAssembler::toModel) 
-				.collect(Collectors.toList());
+				.map(categoryAssembler::toModel).collect(Collectors.toList());
 
 		return CollectionModel.of(categories, linkTo(methodOn(ItemsController.class).all()).withSelfRel());
 	}
@@ -51,35 +50,28 @@ public class CategoriesController {
 	public ResponseEntity<?> newItem(@Valid @RequestBody ItemCategory newCategory) {
 		EntityModel<ItemCategory> entityModel = categoryAssembler.toModel(categoryRepository.save(newCategory));
 
-		  return ResponseEntity
-		      .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
-		      .body(entityModel);
+		return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
 	}
 
 	@GetMapping("/categories/{categoryId}")
 	public EntityModel<ItemCategory> one(@PathVariable Long categoryId) {
-		ItemCategory category = categoryRepository.findById(categoryId).orElseThrow(() -> new CategoryNotFoundException(categoryId));
+		ItemCategory category = categoryRepository.findById(categoryId)
+				.orElseThrow(() -> new CategoryNotFoundException(categoryId));
 		return categoryAssembler.toModel(category);
 	}
 
 	@PutMapping("/categories/{categoryId}")
-	public ResponseEntity<EntityModel<ItemCategory>> replaceItem(@Valid @RequestBody ItemCategory newCategory, @PathVariable Long categoryId) {
+	public ResponseEntity<EntityModel<ItemCategory>> replaceItem(@Valid @RequestBody ItemCategory newCategory,
+			@PathVariable Long categoryId) {
 
-		  ItemCategory updatedCategory = categoryRepository.findById(categoryId)
-			      .map(category -> {
-			        category.setCategoryName(newCategory.getCategoryName());
-			        return categoryRepository.save(category);
-			      }) 
-			      .orElseGet(() -> {
-			    	  newCategory.setCategoryId(categoryId);
-			        return categoryRepository.save(newCategory);
-			      });
+		ItemCategory updatedCategory = categoryRepository.findById(categoryId).map(category -> {
+			category.setCategoryName(newCategory.getCategoryName());
+			return categoryRepository.save(category);
+		}).orElseThrow(() -> new CategoryNotFoundException(categoryId));
 
-			  EntityModel<ItemCategory> entityModel = categoryAssembler.toModel(updatedCategory);
+		EntityModel<ItemCategory> entityModel = categoryAssembler.toModel(updatedCategory);
 
-			  return ResponseEntity
-			      .created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri())
-			      .body(entityModel);
+		return ResponseEntity.created(entityModel.getRequiredLink(IanaLinkRelations.SELF).toUri()).body(entityModel);
 	}
 
 	@DeleteMapping("/categories/{categoryId}")

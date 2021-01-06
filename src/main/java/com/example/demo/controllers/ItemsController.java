@@ -57,7 +57,7 @@ public class ItemsController {
 		List<ListItem> doubleItem = itemRepository.findAll().stream()
 				.filter(item->item.getTaskName().equals(newItem.getTaskName()))
 				.collect(Collectors.toList());
-		if(!doubleItem.isEmpty()) {
+		if(isDoubleItem(newItem)) {
 			throw new DoubleItemException(doubleItem.get(0).getItemId(), doubleItem.get(0).getTaskName());
 		}
 		
@@ -68,13 +68,20 @@ public class ItemsController {
 		      .body(entityModel);
 	}
 
+	private boolean isDoubleItem(@Valid ListItem newItem) {
+		List<ListItem> doubleItem = itemRepository.findAll().stream()
+				.filter(item->item.getTaskName().equals(newItem.getTaskName()))
+				.collect(Collectors.toList());
+		return !doubleItem.isEmpty();
+	}
+
 	@GetMapping("/items/{itemId}")
 	public EntityModel<ListItem> one(@PathVariable Long itemId) {
 		ListItem item = itemRepository.findById(itemId).orElseThrow(() -> new ItemNotFoundException(itemId));
 		return itemAssembler.toModel(item);
 	}
 
-	@PutMapping(name = "/items/{itemId}")
+	@PutMapping("/items/{itemId}")
 	public ResponseEntity<EntityModel<ListItem>> replaceItem(@Valid @RequestBody ListItem newItem, @PathVariable Long itemId) {
 
 		  ListItem updatedItem = itemRepository.findById(itemId) 
@@ -82,10 +89,7 @@ public class ItemsController {
 			        item.setTaskName(newItem.getTaskName());
 			        return itemRepository.save(item);
 			      }) //
-			      .orElseGet(() -> {
-			        newItem.setItemId(itemId);
-			        return itemRepository.save(newItem);
-			      });
+			      .orElseThrow(() -> new ItemNotFoundException(itemId));
 
 			  EntityModel<ListItem> entityModel = itemAssembler.toModel(updatedItem);
 
