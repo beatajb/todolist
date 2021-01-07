@@ -43,7 +43,7 @@ public class CategoriesController {
 		List<EntityModel<ItemCategory>> categories = categoryRepository.findAll().stream()
 				.map(categoryAssembler::toModel).collect(Collectors.toList());
 
-		return CollectionModel.of(categories, linkTo(methodOn(ItemsController.class).all()).withSelfRel());
+		return CollectionModel.of(categories, linkTo(methodOn(CategoriesController.class).all()).withSelfRel());
 	}
 
 	@PostMapping("/categories")

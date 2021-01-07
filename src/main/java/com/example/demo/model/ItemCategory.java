@@ -16,7 +16,7 @@ import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotEmpty;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,50 +25,51 @@ import lombok.RequiredArgsConstructor;
 
 @Data
 @Entity
-@RequiredArgsConstructor 
+@RequiredArgsConstructor
 @NoArgsConstructor
-@Table(name= "category")
+@Table(name = "category")
+@JsonSerialize(using = CategorySerializer.class)
 public class ItemCategory {
 	@Id
-    @GeneratedValue(strategy= GenerationType.AUTO)
-    @Column(name="categoryId")
-    private Long categoryId;
-	
-	@Column(name="categoryName")
-    @NonNull
-    @NotEmpty
-    private String categoryName;
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	@Column(name = "categoryId")
+	private Long categoryId;
 
-    @Column(name="createdAt")
-    private Date createdAt = new Date();
-    
-    @JsonIgnore
-    @ManyToMany (fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REFRESH, CascadeType.MERGE}, mappedBy = "categories")
-    private Set<ListItem> items = new HashSet<>(); 
-    
-    public void addListItem(ListItem item) {
-        items.add(item);
-        item.getCategories().add(this);
-    }
+	@Column(name = "categoryName")
+	@NonNull
+	@NotEmpty
+	private String categoryName;
 
-    @Override
-    public boolean equals(Object o) {
+	@Column(name = "createdAt")
+	private Date createdAt = new Date();
 
-      if (this == o)
-        return true;
-      if (!(o instanceof ItemCategory))
-        return false;
-      ItemCategory item = (ItemCategory) o;
-      return Objects.equals(this.categoryId, item.categoryId);
-    }
+	@ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.PERSIST, CascadeType.REFRESH,
+			CascadeType.MERGE }, mappedBy = "categories")
+	private Set<ListItem> items = new HashSet<>();
 
-    @Override
-    public int hashCode() {
-      return Objects.hash(this.categoryId);
-    }
+	public void addListItem(ListItem item) {
+		items.add(item);
+		item.getCategories().add(this);
+	}
 
-    @Override
-    public String toString() {
-      return "Category{" + "id='" + this.categoryId + '\'' + '}';
-    }
+	@Override
+	public boolean equals(Object o) {
+
+		if (this == o)
+			return true;
+		if (!(o instanceof ItemCategory))
+			return false;
+		ItemCategory item = (ItemCategory) o;
+		return Objects.equals(this.categoryId, item.categoryId);
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.categoryId);
+	}
+
+	@Override
+	public String toString() {
+		return "Category{" + "id='" + this.categoryId + '\'' + '}';
+	}
 }

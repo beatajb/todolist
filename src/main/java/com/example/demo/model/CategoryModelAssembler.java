@@ -7,7 +7,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.server.RepresentationModelAssembler;
 import org.springframework.stereotype.Component;
 
-import com.example.demo.controllers.ItemsController;
+import com.example.demo.controllers.CategoriesController;
 
 @Component
 public class CategoryModelAssembler implements RepresentationModelAssembler<ItemCategory, EntityModel<ItemCategory>> {
@@ -16,7 +16,7 @@ public class CategoryModelAssembler implements RepresentationModelAssembler<Item
   public EntityModel<ItemCategory> toModel(ItemCategory category) {
 
     return EntityModel.of(category,
-        linkTo(methodOn(ItemsController.class).one(category.getCategoryId())).withSelfRel(),
-        linkTo(methodOn(ItemsController.class).all()).withRel("categories"));
+        linkTo(methodOn(CategoriesController.class).one(category.getCategoryId())).withSelfRel(),
+        linkTo(methodOn(CategoriesController.class).all()).withRel("categories"));
   }
 }
