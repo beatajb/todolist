@@ -15,29 +15,24 @@ import com.example.demo.repositories.CategoryRepository;
 import com.example.demo.repositories.ListItemsRepository;
 
 @Configuration
-public class PreloadDataIntoDB {	
+public class PreloadDataIntoDB {
 
-	  private static final Logger log = LoggerFactory.getLogger(PreloadDataIntoDB.class);
+	private static final Logger log = LoggerFactory.getLogger(PreloadDataIntoDB.class);
 
-	  @Bean
-	  CommandLineRunner initDatabase(ListItemsRepository repositoryList, CategoryRepository repositoryCategory) {
+	@Bean
+	CommandLineRunner initDatabase(ListItemsRepository repositoryList, CategoryRepository repositoryCategory) {
 
-		  repositoryList.deleteAllInBatch();
-	      repositoryCategory.deleteAllInBatch();
-	    
-	      return args -> {
-	    	ListItem newItem = new ListItem("wash dishes");
-	    	ListItem newItem2 = new ListItem("clean apartment");
-	    	ListItem newItem3 = new ListItem("clean second apartment");
-	    	ItemCategory category1 = new ItemCategory("Chore");
-	    	ItemCategory category2 = new ItemCategory("Apartment");	    	
-	    	newItem2.getCategories().add(category1);
-	    	newItem3.getCategories().add(category1);
-	    	newItem3.getCategories().add(category2);
-	      log.info("Preloading " + repositoryList.save(newItem));
-	      log.info("Preloading " + repositoryList.save(newItem2));
-	      //log.info("Preloading " + repositoryList.save(newItem3));
-		    
-	    };
-	  }
+		repositoryList.deleteAllInBatch();
+		repositoryCategory.deleteAllInBatch();
+
+		return args -> {
+			ListItem newItem = new ListItem("wash dishes");
+			ListItem newItem2 = new ListItem("clean apartment");
+			ItemCategory category1 = new ItemCategory("Chore");
+			newItem2.getCategories().add(category1);
+			log.info("Preloading " + repositoryList.save(newItem));
+			log.info("Preloading " + repositoryList.save(newItem2));
+
+		};
+	}
 }
