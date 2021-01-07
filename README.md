@@ -1,4 +1,11 @@
-Basic Rest api that displays and allows manipulation of todo list items.
+Basic REST API that displays and allows manipulation of todo list items.
+
+Database setup in application.properties:
+- user: postgres
+- password: beata
+- database: todo
+
+Tested with Postman/curl. Before running the service create the todo database (should be empty). Entry point is localhost:2020/items.
 
 GET /items/
 Lists all items and categories assigned to these items
